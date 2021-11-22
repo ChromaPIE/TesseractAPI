@@ -70,25 +70,22 @@ public class Grid<C extends IConnectable> implements INode {
             return false;
         }
 
-        return Connectivity.has(connectivityFrom, towards.getIndex()) && Connectivity.has(connectivityTo, towards.getOpposite().getIndex());
+        return Connectivity.has(connectivityFrom, towards.get3DDataValue()) && Connectivity.has(connectivityTo, towards.getOpposite().get3DDataValue());
     }
 
     @Override
     public boolean connects(long pos, Direction towards) {
         assert towards != null;
-
         Cache<C> cache = connectors.get(pos);
-        byte connectivity = Byte.MAX_VALUE;//nodes.get(pos).get();
-
         if (cache != null) {
-            connectivity = cache.connectivity();
+            byte connectivity = cache.connectivity();
+            return Connectivity.has(connectivity, towards.get3DDataValue());
+        } else if (nodes.containsKey(pos)) {
+            long connPos = Pos.offset(pos, towards);
+            cache = connectors.get(connPos);
+            return cache != null && cache.connects(towards.getOpposite());
         }
-
-        if (connectivity == Byte.MAX_VALUE) {
-            return false;
-        }
-
-        return Connectivity.has(connectivity, towards.getIndex());
+        return false;
     }
 
     /**
@@ -127,9 +124,10 @@ public class Grid<C extends IConnectable> implements INode {
      */
     public List<Path<C>> getPaths(long from, Direction side) {
         List<Path<C>> data = new ObjectArrayList<>();
-        if (this.connectors.containsKey(from)) {
-            from = Pos.offset(from, side);
-        }
+        //if (this.connectors.containsKey(from)) {
+        //from = Pos.offset(from, side);
+        //     side = side.getOpposite();
+        // }
         for (long to : nodes.keySet()) {
             if (from != to) {
                 data.add(new Path<>(connectors, finder.traverse(from, to)));
